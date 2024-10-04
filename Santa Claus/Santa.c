@@ -87,6 +87,8 @@ int main(){
 
     //Inicializacion de los mutex
     pthread_mutex_init(&mutex_s, NULL);
+    pthread_mutex_init(&mutex_r, NULL);
+    pthread_mutex_init(&mutex_e, NULL);
 
     // Creación de los hilos
     pthread_create(&thread_s, NULL, santa, NULL);
