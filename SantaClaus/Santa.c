@@ -6,21 +6,23 @@
 #define REPETITIONS 100  // Número de repeticiones
 
 // Declaración de semáforos
-sem_t s_santa, s_reno, s_elfo;
+sem_t s_santa, s_reno, s_elfo, s_elfoB, s_renoB;
 pthread_mutex_t mutex_s, mutex_r, mutex_e;
+int trineoListo = 1;
 
 void* renos(void* arg){
+    int renoActual = 0;
     for(int i = 0; i < REPETITIONS; i++){
-        int renoActual = 0;
+        sem_wait(&s_renoB);
         pthread_mutex_lock(&mutex_r);
-        if(sem_trywait(&s_reno) == 0){
+        if(sem_trywait(&s_reno) != 0){
             printf("Voy a buscar a Santa, soy el ultimo Reno\n");
             sem_post(&s_santa);
-            sem_wait(&s_reno); //Dejo de ciclar
         }
         else{
             renoActual++;
             printf("llega el reno %d\n", renoActual);
+            sem_post(&s_renoB);
         }
         pthread_mutex_unlock(&mutex_r);
     }
@@ -28,18 +30,19 @@ void* renos(void* arg){
 }
 
 void* elfos(void* arg){
+    int elfoActual = 0;
     for(int i = 0; i < REPETITIONS; i++){
-        int elfoActual = 0;
+        sem_wait(&s_elfoB);
         pthread_mutex_lock(&mutex_e);
-        if(sem_trywait(&s_elfo) == 0){
+        if(sem_trywait(&s_elfo) != 0){
             elfoActual = 0;
             printf("Voy a buscar a Santa, soy el ultimo Elfo\n");
             sem_post(&s_santa);
-            sem_wait(&s_elfo); //Espera a que santa atienda a los 3 elfos
         }
         else{
             elfoActual++;
             printf("llega el elfo %d\n", elfoActual);
+            sem_post(&s_elfoB);
         }
         pthread_mutex_unlock(&mutex_e);
     }
@@ -50,27 +53,32 @@ void* elfos(void* arg){
 void* santa(void* arg){
     for(int i = 0; i < REPETITIONS; i++){
         //Intento atender a los renos
-        pthread_mutex_lock(&mutex_s);
-        if(sem_trywait(&s_reno) == -1){
-            sem_wait(&s_santa);
-                printf("Santa acomoda a los Renos\n");
+        if(trineoListo == 1){
+            printf("Santa duerme\n");
+            pthread_mutex_lock(&mutex_s);
+            if(sem_trywait(&s_renoB) != 0){
+                sem_wait(&s_santa);
+                    printf("Santa acomoda a los Renos\n");
+                    trineoListo = 0;  
+            }
+            if(sem_trywait(&s_renoB) == 0){
+                sem_post(&s_renoB);
+            }
+            pthread_mutex_unlock(&mutex_s);
         }
-        else{
-            sem_post(&s_reno);
-        }
-        pthread_mutex_unlock(&mutex_s);
 
         //Intento atender a los elfos
         pthread_mutex_lock(&mutex_s);
-        if(sem_trywait(&s_elfo) == -1){
+        if(sem_trywait(&s_elfoB) != 0){
             sem_wait(&s_santa);
                 printf("Santa ayuda a los Elfos\n");
-            for(int j = 0; j < 5; j++){      //#Signals = 3 x elfo + wait para detener ciclo Elfos + descuento Trywait
+            for(int j = 0; j < 2; j++){     
                 sem_post(&s_elfo);          //Puedo recibir a 3 elfos mas
             }
+            sem_post(&s_elfoB);
         }
-        else{
-            sem_post(&s_elfo);
+        if(sem_trywait(&s_elfoB) == 0){
+            sem_post(&s_elfoB);
         }
         pthread_mutex_unlock(&mutex_s);
     }
@@ -82,8 +90,10 @@ int main(){
 
     //Inicializacion de los semaforos
     sem_init(&s_santa, 0, 0);
-    sem_init(&s_elfo, 0, 3);
-    sem_init(&s_reno, 0, 9);
+    sem_init(&s_elfo, 0, 2);
+    sem_init(&s_reno, 0, 8);
+    sem_init(&s_elfoB, 0, 1);
+    sem_init(&s_renoB, 0, 1);
 
     //Inicializacion de los mutex
     pthread_mutex_init(&mutex_s, NULL);
@@ -104,6 +114,8 @@ int main(){
     sem_destroy(&s_santa);
     sem_destroy(&s_elfo);
     sem_destroy(&s_reno);
+    sem_destroy(&s_elfoB);
+    sem_destroy(&s_renoB);
 
     printf("\n");
     return 0;
