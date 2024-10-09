@@ -3,20 +3,19 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#define REPETITIONS 100  // Número de repeticiones
+#define REPETITIONS 100 // Número de repeticiones
 
 // Declaración de semáforos
 sem_t s_santa, s_reno, s_elfo, s_elfoB, s_renoB;
 pthread_mutex_t mutex_s, mutex_r, mutex_e;
-int trineoListo = 0;
 
 void* renos(void* arg){
     int renoActual = 0;
     for(int i = 0; i < REPETITIONS; i++){
         sem_wait(&s_renoB);
-        if(trineoListo == 0){
             pthread_mutex_lock(&mutex_r);                               //Inicializar Semaforo en n-1
-            if(sem_trywait(&s_reno) != 0){                              
+            if(sem_trywait(&s_reno) != 0){    
+                renoActual = 0;                          
                 printf("Voy a buscar a Santa, soy el ultimo Reno\n");
                 sem_post(&s_santa);
             }
@@ -26,7 +25,7 @@ void* renos(void* arg){
                 sem_post(&s_renoB);
             }
             pthread_mutex_unlock(&mutex_r);
-        }
+        
     }
     return NULL;
 }
@@ -57,11 +56,13 @@ void* santa(void* arg){
         sem_wait(&s_santa);
 
         //Intento atender a los renos
-        if(trineoListo == 0){
             pthread_mutex_lock(&mutex_s);
             if(sem_trywait(&s_reno) != 0){
                 printf("Santa ayuda a los Renos\n");
-                trineoListo = 1;  
+            for(int j = 0; j < 8; j++){     
+                sem_post(&s_reno);          //Puedo recibir a 9 renos mas
+            }
+                sem_post(&s_renoB);
             }else{
                 sem_post(&s_reno);
             }
@@ -71,10 +72,9 @@ void* santa(void* arg){
                 printf("Santa solo tiene una tarea\n");
             }
             else{
-                printf("Santa tiene que ayudar a los elfos también\n");
+                printf("Santa tiene 2 tareas, sigue trabajando\n");
             }
             pthread_mutex_unlock(&mutex_s);
-        }
 
         //Intento atender a los elfos
         pthread_mutex_lock(&mutex_s);
