@@ -8,23 +8,25 @@
 // Declaración de semáforos
 sem_t s_santa, s_reno, s_elfo, s_elfoB, s_renoB;
 pthread_mutex_t mutex_s, mutex_r, mutex_e;
-int trineoListo = 1;
+int trineoListo = 0;
 
 void* renos(void* arg){
     int renoActual = 0;
     for(int i = 0; i < REPETITIONS; i++){
         sem_wait(&s_renoB);
-        pthread_mutex_lock(&mutex_r);
-        if(sem_trywait(&s_reno) != 0){
-            printf("Voy a buscar a Santa, soy el ultimo Reno\n");
-            sem_post(&s_santa);
+        if(trineoListo == 0){
+            pthread_mutex_lock(&mutex_r);                               //Inicializar Semaforo en n-1
+            if(sem_trywait(&s_reno) != 0){                              
+                printf("Voy a buscar a Santa, soy el ultimo Reno\n");
+                sem_post(&s_santa);
+            }
+            else{
+                renoActual++;
+                printf("llega el reno %d\n", renoActual);
+                sem_post(&s_renoB);
+            }
+            pthread_mutex_unlock(&mutex_r);
         }
-        else{
-            renoActual++;
-            printf("llega el reno %d\n", renoActual);
-            sem_post(&s_renoB);
-        }
-        pthread_mutex_unlock(&mutex_r);
     }
     return NULL;
 }
@@ -52,33 +54,38 @@ void* elfos(void* arg){
 
 void* santa(void* arg){
     for(int i = 0; i < REPETITIONS; i++){
+        sem_wait(&s_santa);
+
         //Intento atender a los renos
-        if(trineoListo == 1){
-            printf("Santa duerme\n");
+        if(trineoListo == 0){
             pthread_mutex_lock(&mutex_s);
-            if(sem_trywait(&s_renoB) != 0){
-                sem_wait(&s_santa);
-                    printf("Santa acomoda a los Renos\n");
-                    trineoListo = 0;  
+            if(sem_trywait(&s_reno) != 0){
+                printf("Santa ayuda a los Renos\n");
+                trineoListo = 1;  
+            }else{
+                sem_post(&s_reno);
             }
-            if(sem_trywait(&s_renoB) == 0){
-                sem_post(&s_renoB);
+
+            //Veo si tambien tengo que atender a los elfos (s_santa = 2)
+            if(sem_trywait(&s_santa) != 0){
+                printf("Santa solo tiene una tarea\n");
+            }
+            else{
+                printf("Santa tiene que ayudar a los elfos también\n");
             }
             pthread_mutex_unlock(&mutex_s);
         }
 
         //Intento atender a los elfos
         pthread_mutex_lock(&mutex_s);
-        if(sem_trywait(&s_elfoB) != 0){
-            sem_wait(&s_santa);
-                printf("Santa ayuda a los Elfos\n");
+        if(sem_trywait(&s_elfo) != 0){
+            printf("Santa ayuda a los Elfos\n");
             for(int j = 0; j < 2; j++){     
                 sem_post(&s_elfo);          //Puedo recibir a 3 elfos mas
             }
             sem_post(&s_elfoB);
-        }
-        if(sem_trywait(&s_elfoB) == 0){
-            sem_post(&s_elfoB);
+        }else{
+            sem_post(&s_elfo);
         }
         pthread_mutex_unlock(&mutex_s);
     }

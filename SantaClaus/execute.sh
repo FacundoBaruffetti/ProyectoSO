@@ -1,5 +1,5 @@
 #!/bin/bash
 
-gcc Santa.c -o Santa -lpthread
+gcc Santa2.c -o Santa2 -lpthread
 
-./Santa
+./Santa2
