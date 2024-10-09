@@ -66,7 +66,6 @@ void* santa(void* arg){
             }else{
                 sem_post(&s_reno);
             }
-
             //Veo si tambien tengo que atender a los elfos (s_santa = 2)
             if(sem_trywait(&s_santa) != 0){
                 printf("Santa solo tiene una tarea\n");
