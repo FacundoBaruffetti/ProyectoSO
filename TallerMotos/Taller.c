@@ -74,6 +74,7 @@ void* pintorV(void* arg){
     
 }
 
+
 void* extra(){
     for(int i = 0; i < REPETITIONS; i++){
     sem_wait(&s_extra);  // Espera a que haya extra disponible

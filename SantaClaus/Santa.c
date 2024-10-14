@@ -59,9 +59,9 @@ void* santa(void* arg){
             pthread_mutex_lock(&mutex_s);
             if(sem_trywait(&s_reno) != 0){
                 printf("Santa ayuda a los Renos\n");
-            for(int j = 0; j < 8; j++){     
-                sem_post(&s_reno);          //Puedo recibir a 9 renos mas
-            }
+                for(int j = 0; j < 8; j++){     
+                    sem_post(&s_reno);          //Puedo recibir a 9 renos mas
+                }
                 sem_post(&s_renoB);
             }else{
                 sem_post(&s_reno);
