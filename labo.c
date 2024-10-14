@@ -4,12 +4,12 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-sem_t lanzador_jabalina, lanazador_martillo, corredor, s_instalaciones, contador_corredores;
+sem_t s_lanzador_jabalina, s_lanazador_martillo, s_corredor, s_instalaciones, contador_corredores;
 pthread_mutex_t instalaciones;
 
 void *lanzador_jabalina(void *arg) {
     while (1) {
-        sem_wait(&lanzador_jabalina);
+        sem_wait(&s_lanzador_jabalina);
         pthread_mutex_lock(&instalaciones);		
         if(sem_trywait(&s_instalaciones) != 0){	
             pthread_mutex_lock(&instalaciones);	
@@ -31,7 +31,7 @@ void *lanzador_jabalina(void *arg) {
 
 void *lanzador_martillo(void *arg) {
     while (1) {
-        sem_wait(&lanzador_martillo);
+        sem_wait(&s_lanzador_martillo);
         pthread_mutex_lock(&instalaciones);		
         if(sem_trywait(&s_instalaciones) != 0){	
             pthread_mutex_lock(&instalaciones);	
@@ -52,7 +52,7 @@ void *lanzador_martillo(void *arg) {
 
 void *corredor(void *arg) {
     while (1) {
-        sem_wait(&corredor);
+        sem_wait(&s_corredor);
         pthread_mutex_lock(&instalaciones);	
         if(sem_trywait(&s_instalaciones) != 0){			
             printf("Entra primer corredor\n");
@@ -90,9 +90,9 @@ int main() {
     pthread_t t1, t2, t3;
 
     // Initialize semaphores
-    sem_init(&lanzador_jabalina, 0, 0);
-    sem_init(&lanazador_martillo, 0, 0);
-    sem_init(&corredor, 0, 0);
+    sem_init(&s_lanzador_jabalina, 0, 0);
+    sem_init(&s_lanazador_martillo, 0, 0);
+    sem_init(&s_corredor, 0, 0);
     sem_init(&s_instalaciones, 0, 1);
     sem_init(&contador_corredores, 0, 0);
 
@@ -109,13 +109,13 @@ int main() {
         int event = rand() % 3;
         switch (event) {
             case 0:
-                sem_post(&lanzador_jabalina);
+                sem_post(&s_lanzador_jabalina);
                 break;
             case 1:
-                sem_post(&lanazador_martillo);
+                sem_post(&s_lanazador_martillo);
                 break;
             case 2:
-                sem_post(&corredor);
+                sem_post(&s_corredor);
                 break;
         }
         sleep(1); // Simulate time between athletes
@@ -127,9 +127,9 @@ int main() {
     pthread_join(t3, NULL);
 
     // Destroy semaphores and mutex
-    sem_destroy(&lanzador_jabalina);
-    sem_destroy(&lanazador_martillo);
-    sem_destroy(&corredor);
+    sem_destroy(&s_lanzador_jabalina);
+    sem_destroy(&s_lanazador_martillo);
+    sem_destroy(&s_corredor);
     sem_destroy(&s_instalaciones);
     sem_destroy(&contador_corredores);
     pthread_mutex_destroy(&instalaciones);
