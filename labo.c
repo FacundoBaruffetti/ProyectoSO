@@ -91,7 +91,7 @@ int main() {
 
     // Initialize semaphores
     sem_init(&s_lanzador_jabalina, 0, 0);
-    sem_init(&s_lanazador_martillo, 0, 0);
+    sem_init(&s_lanzador_martillo, 0, 0);
     sem_init(&s_corredor, 0, 0);
     sem_init(&s_instalaciones, 0, 1);
     sem_init(&contador_corredores, 0, 0);
@@ -112,7 +112,7 @@ int main() {
                 sem_post(&s_lanzador_jabalina);
                 break;
             case 1:
-                sem_post(&s_lanazador_martillo);
+                sem_post(&s_lanzador_martillo);
                 break;
             case 2:
                 sem_post(&s_corredor);
@@ -128,7 +128,7 @@ int main() {
 
     // Destroy semaphores and mutex
     sem_destroy(&s_lanzador_jabalina);
-    sem_destroy(&s_lanazador_martillo);
+    sem_destroy(&s_lanzador_martillo);
     sem_destroy(&s_corredor);
     sem_destroy(&s_instalaciones);
     sem_destroy(&contador_corredores);
